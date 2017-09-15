@@ -115,7 +115,7 @@ void voxel_grid_test()
 
   //prepare the data
   pointCloudPtr cloud(new pointCloudT);
-  std::string fname="//home//wangy//dev//3dvision_ws//projects//build//milkbox_cuda//scene_1.pcd";
+  std::string fname="//home//wangy//dev//3dvision_ws//projects//build//milkbox_cuda//scene_2.pcd";
   pcl::io::loadPCDFile(fname,*cloud);
 
   //convert the pcl pointcloud to host_vector type
