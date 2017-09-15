@@ -127,7 +127,7 @@ void voxel_grid_test()
   std::cout<<"cloud size is: "<<cloud->points.size()<<std::endl;
 
   //fitler by voxel grid
-  float leafSize=0.008;
+  float leafSize=0.005;
   thrust::device_vector<mb_cuda::PointXYZRGB> d_filtered;
   thrust::device_vector<mb_cuda::PointXYZRGB> d_nonan_cloud;
   boost::timer _timer;
