@@ -4,12 +4,14 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 #include "mb_cuda/common/point_types.h"
 #include "mb_cuda/io/pcl_thrust.h"
 #include "mb_cuda/io/host_device.h"
 #include "mb_cuda/filters/pass_through.h"
 #include "mb_cuda/filters/voxel_grid.h"
+#include "mb_cuda/filters/statistical_outlier_removal.h"
 
 #include <boost/timer.hpp>
 #include <boost/shared_ptr.hpp>
@@ -24,13 +26,16 @@ void point_setvalue_test();
 void pass_through_test();
 void getMinMax_test();
 void voxel_grid_test();
+void statistical_outliers_removal_test();
 
 int main()
 {
 //  point_setvalue_test();
 //  pass_through_test();
 //  getMinMax_test();
-  voxel_grid_test();
+//  voxel_grid_test();
+//  mb_cuda::flann_search();
+  statistical_outliers_removal_test();
 }
 
 void point_setvalue_test()
@@ -131,7 +136,7 @@ void voxel_grid_test()
   thrust::device_vector<mb_cuda::PointXYZRGB> d_filtered;
   thrust::device_vector<mb_cuda::PointXYZRGB> d_nonan_cloud;
   boost::timer _timer;
-  mb_cuda::removeNans(device_cloud,d_nonan_cloud);
+  mb_cuda::removeNansOrIfs(device_cloud,d_nonan_cloud);
   std::cout<<"mb_cuda removeNans elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
   _timer.restart();
   mb_cuda::voxel_grid_filter(d_nonan_cloud,d_filtered,leafSize);
@@ -163,4 +168,69 @@ void voxel_grid_test()
       viewer.spinOnce();
       viewer2.spinOnce();
     }
+}
+
+void statistical_outliers_removal_test()
+{
+  std::cout<<std::endl<<"[test]: statistical_outliers_removal"<<std::endl;
+  std::cout<<"========================================="<<std::endl;
+
+  //prepare the data
+  pointCloudPtr cloud(new pointCloudT);
+  std::string fname="//home//wangy//dev//3dvision_ws//projects//build//milkbox_cuda//scene_1.pcd";
+  pcl::io::loadPCDFile(fname,*cloud);
+
+  //convert the pcl pointcloud to host_vector type
+  thrust::host_vector<mb_cuda::PointXYZRGB> host_cloud;
+  thrust::device_vector<mb_cuda::PointXYZRGB> device_cloud;
+  mb_cuda::pcl_to_thrust(cloud,host_cloud);
+  mb_cuda::host_to_device(host_cloud,device_cloud);
+
+  std::cout<<"cloud size is: "<<cloud->points.size()<<std::endl;
+
+  //fitler by voxel grid
+//  float leafSize=0.005;
+//  thrust::device_vector<mb_cuda::PointXYZRGB> d_filtered;
+//  thrust::device_vector<mb_cuda::PointXYZRGB> d_nonan_cloud;
+//  boost::timer _timer;
+//  mb_cuda::removeNansOrIfs(device_cloud,d_nonan_cloud);
+//  std::cout<<"mb_cuda removeNans elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+//  _timer.restart();
+//  mb_cuda::voxel_grid_filter(d_nonan_cloud,d_filtered,leafSize);
+//  std::cout<<"mb_cuda voxel_grid elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+//  std::cout<<"after filtered, the cloud size is: "<<d_filtered.size()<<std::endl;
+//  pointCloudPtr cuda_filtered_cloud(new pointCloudT);
+//  thrust::host_vector<mb_cuda::PointXYZRGB> h_tmp;
+//  mb_cuda::device_to_host(d_filtered,h_tmp);
+//  mb_cuda::thrust_to_pcl(h_tmp,cuda_filtered_cloud);
+
+//  //using pcl::voxelgrid to downsample
+//  pcl::VoxelGrid<pointT> grid;
+//  pointCloudPtr h_filtered(new pointCloudT);
+//  grid.setInputCloud(cloud);
+//  grid.setLeafSize(leafSize,leafSize,leafSize);
+//  _timer.restart();
+//  grid.filter(*h_filtered);
+//  std::cout<<"pcl voxel_grid elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+//  std::cout<<"after filtered, the cloud size is: "<<h_filtered->points.size()<<std::endl;
+
+  //statistical outliers removal
+  int knn=50;
+  int inliers_num=0;
+  thrust::device_vector<int> inliers;
+  boost::timer _timer;
+  mb_cuda::statistical_outlier_removal(device_cloud,knn,1.0,inliers, inliers_num);
+  std::cout<<"statistical outliers removal elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+  std::cout<<"num of inliers: "<<inliers_num<<std::endl;
+
+  //using pcl outlier removal
+//  pcl::StatisticalOutlierRemoval<pointT> outlierRemv;
+//  outlierRemv.setInputCloud(cloud);
+//  outlierRemv.setMeanK(50);
+//  outlierRemv.setStddevMulThresh(0.5);
+//  boost::timer _timer;
+//  outlierRemv.filter(*cloud);
+//  std::cout<<"pcl statistical outliers removal elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+//  std::cout<<"num of inliers: "<<cloud->points.size()<<std::endl;
+
 }

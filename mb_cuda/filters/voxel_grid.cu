@@ -306,7 +306,6 @@ namespace mb_cuda {
     divb_mul_[1]=div_b_[0];
     divb_mul_[2]=div_b_[0]*div_b_[1];
 
-
 //    std::cout<<"divb_mul_: "<<divb_mul_[0]<<" "<<divb_mul_[1]<<" "<<divb_mul_[2]<<std::endl;
 
     //index_vector stores the point index and voxel index of a point

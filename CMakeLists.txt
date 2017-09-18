@@ -34,12 +34,15 @@ include_directories(
     ${PCL_INCLUDE_DIRS}
     ${freenect2_INCLUDE_DIR}
     "/usr/local/include"
+    "/sur/local/include/flann"
     ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
 link_directories(
     ${PCL_LIBRARY_DIRS}
-    "/opt/freenect2/lib/")
+    ${FLANN_LIBRARY_DIRS}
+    "/opt/freenect2/lib/"
+    "/usr/local/lib/")
 
 add_definitions(${PCL_DEFINITIONS})
 
@@ -57,6 +60,8 @@ CUDA_ADD_EXECUTABLE(${PROJECT_NAME}
     mb_cuda/filters/pass_through.cu
     mb_cuda/filters/voxel_grid.h
     mb_cuda/filters/voxel_grid.cu
+    mb_cuda/filters/statistical_outlier_removal.h
+    mb_cuda/filters/statistical_outlier_removal.cu
 #    mb_cuda/filters/filter.h
 #    mb_cuda/common/point_cloud.h
 #    mb_cuda/io/host_device.h
@@ -69,4 +74,5 @@ target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBRARIES}
     ${VTK_LIBRARIES}
     ${PCL_LIBRARIES}
+    "/usr/local/lib/libflann_cuda.so"
 )

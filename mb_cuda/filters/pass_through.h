@@ -39,6 +39,6 @@ namespace mb_cuda {
    * @param inputCloud
    * @param outputCloud
    */
-  void removeNans(const deviceCloudT &inputCloud, deviceCloudT & outputCloud);
+  void removeNansOrIfs(const deviceCloudT &inputCloud, deviceCloudT & outputCloud);
 }
 #endif

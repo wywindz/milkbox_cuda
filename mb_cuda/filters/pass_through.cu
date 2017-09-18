@@ -83,7 +83,8 @@ namespace mb_cuda {
     __host__ __device__
     bool operator() (const mb_cuda::PointXYZRGB& p)const
     {
-      return (!isnan(p.x) && !isnan(p.y) && !isnan(p.z));
+      return (!isnan(p.x) && !isnan(p.y) && !isnan(p.z)
+              && isfinite(p.x) && isfinite(p.y) && isfinite(p.z));
     }
   };
 
@@ -92,7 +93,7 @@ namespace mb_cuda {
    * @param inputCloud
    * @param outputCloud
    */
-  void removeNans(const deviceCloudT &inputCloud, deviceCloudT & outputCloud)
+  void removeNansOrIfs(const deviceCloudT &inputCloud, deviceCloudT & outputCloud)
   {
     outputCloud.resize(inputCloud.size());
     deviceCloudT::iterator it=thrust::copy_if(thrust::device,inputCloud.begin(),inputCloud.end(),outputCloud.begin(),isNan_functor());
