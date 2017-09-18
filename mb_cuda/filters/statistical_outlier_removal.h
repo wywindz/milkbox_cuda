@@ -20,7 +20,29 @@ namespace mb_cuda {
    * @param [out] inliers_indices
    * @param [out] inliers_num
    */
-  void statistical_outlier_removal(deviceCloudT input_points, int k, float std_mul, thrust::device_vector<int> inliers_indices, int& inliers_num);
+  void statistical_outlier_removal(
+      deviceCloudT input_points,
+      int k,
+      float std_mul,
+      thrust::device_vector<int> inliers_indices,
+      int& inliers_num);
+
+  /**
+   * @brief statistical_outlier_removal
+   * @param dists
+   * @param pt_num
+   * @param k
+   * @param std_mul
+   * @param inliers_indices
+   * @param inliers_num
+   */
+  void statistical_outlier_removal(
+      thrust::device_ptr<float> dists,
+      int pt_num,
+      int k,
+      float std_mul,
+      thrust::device_vector<int> inliers_indices,
+      int& inliers_num);
 }
 
 #endif

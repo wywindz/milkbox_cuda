@@ -5,6 +5,9 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/search/kdtree.h>
+//#include <pcl/kdtree/kdtree_flann.h>
+#include <thrust/execution_policy.h>
 
 #include "mb_cuda/common/point_types.h"
 #include "mb_cuda/io/pcl_thrust.h"
@@ -215,22 +218,52 @@ void statistical_outliers_removal_test()
 //  std::cout<<"after filtered, the cloud size is: "<<h_filtered->points.size()<<std::endl;
 
   //statistical outliers removal
-  int knn=50;
+//  boost::timer _timer;
+//  int knn=50;
+//  int inliers_num=0;
+//  thrust::device_vector<int> inliers;
+//  mb_cuda::statistical_outlier_removal(device_cloud,knn,1.0,inliers, inliers_num);
+//  std::cout<<"statistical outliers removal elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+//  std::cout<<"num of inliers: "<<inliers_num<<std::endl;
+
+  //kdtree from pcl + cuda find inliers
+  int mean_k=50;
   int inliers_num=0;
+  int pt_num=cloud->points.size();
   thrust::device_vector<int> inliers;
-  boost::timer _timer;
-  mb_cuda::statistical_outlier_removal(device_cloud,knn,1.0,inliers, inliers_num);
-  std::cout<<"statistical outliers removal elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+
+  pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+  kdtree.setInputCloud (cloud);
+  thrust::device_ptr<float> dists_ptr=thrust::device_malloc<float>(mean_k*pt_num);
+//  std::vector<std::vector<int> > indices_vec(pt_num);
+  std::vector<std::vector<float> > dists_vec(pt_num);
+
+  boost::timer _timer1;
+  for(int i=0;i<pt_num;++i){
+      std::vector<int> indices_vec(mean_k);
+      dists_vec[i].resize(mean_k);
+      pointT pt=cloud->points[i];
+      kdtree.nearestKSearch(pt,mean_k,indices_vec,dists_vec[i]);
+      for(int j=0;j<mean_k;++j){
+          dists_ptr[i*mean_k+j]=dists_vec[i][j];
+        }
+    }
+
+  mb_cuda::statistical_outlier_removal(dists_ptr,pt_num,mean_k,2.0,inliers,inliers_num);
+  thrust::free(thrust::device, dists_ptr);
+  std::cout<<"statistical outliers removal elapsed time: "<<_timer1.elapsed()*1000<<" ms"<<std::endl;
   std::cout<<"num of inliers: "<<inliers_num<<std::endl;
 
+
+
   //using pcl outlier removal
-//  pcl::StatisticalOutlierRemoval<pointT> outlierRemv;
-//  outlierRemv.setInputCloud(cloud);
-//  outlierRemv.setMeanK(50);
-//  outlierRemv.setStddevMulThresh(0.5);
-//  boost::timer _timer;
-//  outlierRemv.filter(*cloud);
-//  std::cout<<"pcl statistical outliers removal elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
-//  std::cout<<"num of inliers: "<<cloud->points.size()<<std::endl;
+  boost::timer _timer;
+  pcl::StatisticalOutlierRemoval<pointT> outlierRemv;
+  outlierRemv.setInputCloud(cloud);
+  outlierRemv.setMeanK(50);
+  outlierRemv.setStddevMulThresh(3.0);
+  outlierRemv.filter(*cloud);
+  std::cout<<"pcl statistical outliers removal elapsed time: "<<_timer.elapsed()*1000<<" ms"<<std::endl;
+  std::cout<<"num of inliers: "<<cloud->points.size()<<std::endl;
 
 }

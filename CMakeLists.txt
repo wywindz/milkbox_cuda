@@ -74,5 +74,5 @@ target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBRARIES}
     ${VTK_LIBRARIES}
     ${PCL_LIBRARIES}
-    "/usr/local/lib/libflann_cuda.so"
+#    "/usr/local/lib/libflann_cuda.so"
 )
